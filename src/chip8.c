@@ -30,6 +30,7 @@ typedef enum {
 // CHIP-8 Obj
 typedef struct{
 	emulator_state_t state;
+	
 } chip8_t;
 
 bool init_sdl(sdl_t *sdl, config_t config){
