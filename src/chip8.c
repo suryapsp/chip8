@@ -27,6 +27,16 @@ typedef enum {
 	PAUSED
 } emulator_state_t;
 
+
+typedef struct{
+	uint16_t opcode;
+	uint16_t NNN;
+	uint8_t NN;
+	uint8_t N;
+	uint8_t X;
+	uint8_t Y;
+}instruction_t;
+
 // CHIP-8 Obj
 typedef struct{
 	emulator_state_t state;
@@ -71,7 +81,7 @@ bool set_config(config_t *config, int argc, char **argv){
 		.window_width = 64,
 		.window_height = 32, //OG CHIP8 Resolution
 		.foreground_color = 0xFFFFFFFF, //White 
-		.background_color = 0xFFFF00FF,  //Yellow
+		.background_color = 0x000000FF,  //Yellow
 		.scale_factor = 20 // Scale 20x
 	};
 
@@ -181,6 +191,16 @@ void handle_input(chip8_t *chip8){
 						chip8 -> state = QUIT;
 						return;
 
+					case SDLK_SPACE:
+						if(chip8->state == RUNNING){
+							chip8->state = PAUSED;
+						}
+						else{
+							chip8->state = RUNNING;
+							puts("paused");
+						}
+						return;
+
 					default:
 						break;
 
@@ -196,7 +216,19 @@ void handle_input(chip8_t *chip8){
 	}
 }
 
+void emulate_instructions(chip8_t *chip8){
+
+}
+
+
 int main(int argc, char **argv){
+	// NO ROM PASSED
+	if(argc<2){
+		printf("NO ROM PASSED\n");
+		exit(EXIT_FAILURE);
+	}
+
+
 	// Emulator Config
 	config_t config = {0};
 	if(set_config(&config, argc, argv) == false){
@@ -222,6 +254,10 @@ int main(int argc, char **argv){
 	while(chip8.state != QUIT){
 		// User Input
 		handle_input(&chip8);
+
+		if(chip8.state == PAUSED){continue;}
+
+		emulate_instructions(&chip8);
 
 
 		// CHIP 8 Instructions Emulation
