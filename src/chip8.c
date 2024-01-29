@@ -50,6 +50,7 @@ typedef struct{
 	bool keypad[16]; //0-F
 	const char *rom_name; //Name of ROM
 	uint16_t PC; //Program Counter
+	instruction_t inst; //instruction currently executing
 } chip8_t;
 
 bool init_sdl(sdl_t *sdl, config_t config){
@@ -217,6 +218,39 @@ void handle_input(chip8_t *chip8){
 }
 
 void emulate_instructions(chip8_t *chip8){
+	// Get opcode from RAM
+	chip8->inst.opcode = (chip8->ram[chip8->PC] << 8) | chip8 -> ram[chip8->PC+1];
+	chip8->PC +=2;
+
+	// SYMBOLS 
+	chip8->inst.NNN = chip8->inst.opcode & 0x0FFF;
+	chip8->inst.NN = chip8->inst.opcode & 0x0FF;
+	chip8->inst.N = chip8->inst.opcode & 0x0F;
+	chip8->inst.X = (chip8->inst.opcode >> 8) & 0x0F;
+	chip8->inst.Y = (chip8->inst.opcode >> 4) & 0x0F;
+
+	// OPCODES INSTRUCTIONS
+	switch((chip8->inst.opcode >> 12) & 0x0F){
+
+		case 0x00:
+			if(chip8->inst.NN == 0xE0){
+				// 0x00E0 Display Clear
+				memset(chip8->display, false, sizeof(chip8->display));
+			}
+			else if(chip8->inst.NN == 0xEE){
+				// Returns from a subroutine
+				// 0x00EE
+
+			}
+			break;
+
+		case 0x02:
+			// Calls subroutine at NNN
+
+
+		default:
+			break;
+	}
 
 }
 
