@@ -43,6 +43,7 @@ typedef struct{
 	uint8_t ram[4096];
 	bool display[64*32]; // CHIP-8 resolution pixels
 	uint16_t stack[12]; // CHIP-8 Stack
+	uint16_t *SP;
 	uint8_t V[16]; // CHIP-8 Registers V0-VF
 	uint16_t I; // Memory Address Register
 	uint8_t delay_timer; //subtract 1 from the value of DT(Delay Timer Register) at a rate of 60Hz
@@ -151,6 +152,7 @@ bool init_chip8(chip8_t *chip8, const char rom_name[]){
 	chip8 -> state = RUNNING;
 	chip8 -> PC = entry_point;
 	chip8 -> rom_name = rom_name;
+	chip8 -> SP = chip8->stack;
 
 	return true; //Sucess
 }
@@ -217,7 +219,64 @@ void handle_input(chip8_t *chip8){
 	}
 }
 
-void emulate_instructions(chip8_t *chip8){
+#ifdef DEBUG
+	void print_debug_output(chip8_t *chip8){
+		printf("Address: 0x%04X, Opcode: 0x%04X Description: \n", chip8->PC-2, chip8->inst.opcode);
+		switch((chip8->inst.opcode >> 12) & 0x0F){
+
+		case 0x00:
+			if(chip8->inst.NN == 0xE0){
+				// 0x00E0 Display Clear
+				printf("clear the screen\n");
+			}
+			else if(chip8->inst.NN == 0xEE){
+				// Returns from a subroutine
+				// 0x00EE
+				/*
+				Set Program Counter to last address of function(subroutine) call (pop it off the stack)
+				*/
+				printf("return from a subroutine\n");
+			}
+			else{
+				printf("unimplemented opcode\n");
+			}
+			break;
+
+		case 0x02:
+			// Calls subroutine at NNN
+			// 0x2NNN
+			/*
+			Store Current Address from the program counter to the stack (PUSH IT TO THE STACK)
+			Set the program counter to NNN 
+			*/
+			*chip8->SP++ = chip8->PC; 
+			chip8->PC = chip8->inst.NNN;
+			break;
+
+		case 0x0A:
+			// 0xANNN
+			// Sets I to the address NNN
+
+			printf("set I to NNN: 0x%04X\n", chip8->inst.NNN);
+			break;
+
+		case 0x06:
+			// Sets VX to NN
+			// 0x6XNN
+
+			printf("Set V%X to NN(0x%02X)\n", chip8->inst.X, chip8->inst.NN);
+
+			break;
+
+		default:
+			printf("unimplemented \n");
+			break;
+	}
+	}
+#endif
+
+// FIRST CHIP8 INSTRUCTIONS
+void emulate_instructions(chip8_t *chip8, const config_t config){
 	// Get opcode from RAM
 	chip8->inst.opcode = (chip8->ram[chip8->PC] << 8) | chip8 -> ram[chip8->PC+1];
 	chip8->PC +=2;
@@ -229,7 +288,10 @@ void emulate_instructions(chip8_t *chip8){
 	chip8->inst.X = (chip8->inst.opcode >> 8) & 0x0F;
 	chip8->inst.Y = (chip8->inst.opcode >> 4) & 0x0F;
 
-	// OPCODES INSTRUCTIONS
+#ifdef DEBUG
+	print_debug_output(chip8);
+#endif
+	// EMULATING OPCODES INSTRUCTIONS
 	switch((chip8->inst.opcode >> 12) & 0x0F){
 
 		case 0x00:
@@ -240,13 +302,66 @@ void emulate_instructions(chip8_t *chip8){
 			else if(chip8->inst.NN == 0xEE){
 				// Returns from a subroutine
 				// 0x00EE
+				/*
+				Set Program Counter to last address of function(subroutine) call (pop it off the stack)
+				*/
+				chip8->PC = *--chip8->SP;
 
 			}
 			break;
 
 		case 0x02:
 			// Calls subroutine at NNN
+			// 0x2NNN
+			/*
+			Store Current Address from the program counter to the stack (PUSH IT TO THE STACK)
+			Set the program counter to NNN 
+			*/
+			*chip8->SP++ = chip8->PC; 
+			chip8->PC = chip8->inst.NNN;
+			break;
 
+		case 0x0A:
+			// 0xANNN
+			// Sets I to the address NNN
+
+			chip8->I = chip8->inst.NNN;
+			break;
+
+		case 0x06:
+			// Sets VX to NN
+			// 0x6XNN
+
+			chip8->V[chip8->inst.X] = chip8->inst.NN;
+
+			break;
+
+		case 0x0D:
+			/*
+			Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that does not happen
+			*/
+			// 0xDXYN
+
+			uint8_t x = chip8->V[chip8->inst.X];
+			uint8_t y = chip8->V[chip8->inst.Y];
+			uint8_t height = chip8->inst.N;
+
+			// wrap the coordinates if they are bigger than the screen size
+			x %= config.window_width;
+			y %= config.window_height;
+
+			// Set carry/collision flag to 0
+			chip8->V[0xF] = 0;
+
+			// Loop to iterate over N rows in the sprite
+			for(uint8_t i = 0; i < height; i++){
+				uint8_t sprite_data = chip8->ram[chip8->I + i];
+
+				// Loop to iterate over each bit(pixel) in the sprite
+				for(int8_t j = 7; j >= 0; j--){
+					
+				}
+			}
 
 		default:
 			break;
@@ -291,7 +406,7 @@ int main(int argc, char **argv){
 
 		if(chip8.state == PAUSED){continue;}
 
-		emulate_instructions(&chip8);
+		emulate_instructions(&chip8, config);
 
 
 		// CHIP 8 Instructions Emulation
