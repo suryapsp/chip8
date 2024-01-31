@@ -174,7 +174,8 @@ void clear_screen(const sdl_t sdl, const config_t config){
 }
 
 // Update window changes
-void update_screen(const sdl_t sdl){
+void update_screen(const sdl_t sdl, chip8_t chip8){
+	
 	SDL_RenderPresent(sdl.renderer);
 }
 
@@ -344,6 +345,9 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 
 			uint8_t x = chip8->V[chip8->inst.X];
 			uint8_t y = chip8->V[chip8->inst.Y];
+
+			uint8_t og_x = x; // original x value
+
 			uint8_t height = chip8->inst.N;
 
 			// wrap the coordinates if they are bigger than the screen size
@@ -357,11 +361,28 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			for(uint8_t i = 0; i < height; i++){
 				uint8_t sprite_data = chip8->ram[chip8->I + i];
 
+				x = og_x; //reset x for next row
 				// Loop to iterate over each bit(pixel) in the sprite
 				for(int8_t j = 7; j >= 0; j--){
-					
+					bool *pixel = &chip8 -> display[y*config.window_height + x];
+
+					bool sprite_bit = (sprite_data&(1<<j));
+
+					if(sprite_bit && *pixel){
+						chip8->V[0xF] = 1;
+					}
+
+					// XOR display pixel with sprite pixel to set it on or off
+					*pixel ^= sprite_bit;
+
+
+					// 
+					if(++x >= config.window_width) break;
 				}
+				// 
+				if(++y >= config.window_height) break;
 			}
+			break;
 
 		default:
 			break;
@@ -415,7 +436,7 @@ int main(int argc, char **argv){
 		// Delay for 60fps
 		SDL_Delay(16);
 		// Update Window
-		update_screen(sdl);
+		update_screen(sdl, chip8);
 	}
 
 	final_cleanup(sdl);
