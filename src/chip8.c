@@ -12,6 +12,8 @@ typedef struct {
 	uint32_t background_color; // bg color R-8 G-8 B-8 A-8
 
 	uint32_t scale_factor; // Scale CHIP-8 px
+
+	bool pixel_outlines; // does the user want pixel outlines or not
 }config_t;
 
 typedef struct 
@@ -84,7 +86,8 @@ bool set_config(config_t *config, int argc, char **argv){
 		.window_height = 32, //OG CHIP8 Resolution
 		.foreground_color = 0xFFFFFFFF, //White 
 		.background_color = 0x000000FF,  //Yellow
-		.scale_factor = 20 // Scale 20x
+		.scale_factor = 20, // Scale 20x
+		.pixel_outlines = true // Draw pixel outlines
 	};
 
 	// Change Defaults
@@ -174,8 +177,51 @@ void clear_screen(const sdl_t sdl, const config_t config){
 }
 
 // Update window changes
-void update_screen(const sdl_t sdl, chip8_t chip8){
-	
+void update_screen(const sdl_t sdl, config_t config, chip8_t chip8){
+	SDL_Rect rect = {.x = 0, .y = 0, .w = config.scale_factor, .h = config.scale_factor};
+
+// Color Values
+	const uint8_t bg_r = (config.background_color >> 24) & 0xFF;
+	const uint8_t bg_g = (config.background_color >> 16) & 0xFF;
+	const uint8_t bg_b = (config.background_color >> 8) & 0xFF;
+	const uint8_t bg_a = (config.background_color >> 0) & 0xFF;
+
+	const uint8_t fg_r = (config.foreground_color >> 24) & 0xFF;
+	const uint8_t fg_g = (config.foreground_color >> 16) & 0xFF;
+	const uint8_t fg_b = (config.foreground_color >> 8) & 0xFF;
+	const uint8_t fg_a = (config.foreground_color >> 0) & 0xFF;
+
+
+
+// Draw Rectange per pixel
+	for(u_int32_t i = 0; i < sizeof(chip8.display); i++){
+		// Translate i value to x y coordinates
+		rect.x = (i % config.window_width)*config.scale_factor;
+		rect.y = (i / config.window_width) *config.scale_factor;
+
+
+		if(chip8.display[i]){
+			// draw foreground
+			SDL_SetRenderDrawColor(sdl.renderer, fg_r, fg_g, fg_b, fg_a);
+			SDL_RenderFillRect(sdl.renderer, &rect);
+
+			// pixel outlines not necessary can be used as user option
+			if(config.pixel_outlines){
+				SDL_SetRenderDrawColor(sdl.renderer, bg_r, bg_g, bg_b, bg_a);
+				SDL_RenderDrawRect(sdl.renderer, &rect);
+			}
+
+
+		}
+		else{
+			// draw background
+			SDL_SetRenderDrawColor(sdl.renderer, bg_r, bg_g, bg_b, bg_a);
+			SDL_RenderFillRect(sdl.renderer, &rect);
+		}
+	}
+
+
+
 	SDL_RenderPresent(sdl.renderer);
 }
 
@@ -243,6 +289,12 @@ void handle_input(chip8_t *chip8){
 			}
 			break;
 
+		case 0x01:
+			// 1NNN
+			// Jumps to address NNN
+			printf("jums to address NNN 0x0%4X\n", chip8->inst.NNN);
+			break;
+
 		case 0x02:
 			// Calls subroutine at NNN
 			// 0x2NNN
@@ -267,6 +319,22 @@ void handle_input(chip8_t *chip8){
 
 			printf("Set V%X to NN(0x%02X)\n", chip8->inst.X, chip8->inst.NN);
 
+			break;
+
+		case 0x07:
+		// Adds NN to VX (carry flag is not changed)
+		// 0x7XNN
+			printf("Added NN (0x%02X) to V%X\n", chip8->inst.NN, chip8->inst.X);
+
+			break;
+
+
+		case 0x0D:
+			/*
+			Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that does not happen
+			*/
+			// 0xDXYN
+			printf("Drawing %u height sprite at coordinates V%X [0x%02X] and V%X [0x%02X]\n", chip8->inst.N, chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.Y, chip8->V[chip8->inst.Y]);
 			break;
 
 		default:
@@ -311,6 +379,14 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			}
 			break;
 
+		case 0x01:
+			// 1NNN
+
+			// Jumps to address NNN
+
+			chip8->PC = chip8->inst.NNN;
+			break;
+
 		case 0x02:
 			// Calls subroutine at NNN
 			// 0x2NNN
@@ -336,6 +412,13 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			chip8->V[chip8->inst.X] = chip8->inst.NN;
 
 			break;
+
+		case 0x07:
+			// Adds NN to VX (carry flag is not changed)
+			// 0x7XNN
+			chip8->V[chip8->inst.X] += chip8->inst.NN;
+			break;
+
 
 		case 0x0D:
 			/*
@@ -364,7 +447,7 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 				x = og_x; //reset x for next row
 				// Loop to iterate over each bit(pixel) in the sprite
 				for(int8_t j = 7; j >= 0; j--){
-					bool *pixel = &chip8 -> display[y*config.window_height + x];
+					bool *pixel = &chip8 -> display[y*config.window_width + x];
 
 					bool sprite_bit = (sprite_data&(1<<j));
 
@@ -436,7 +519,7 @@ int main(int argc, char **argv){
 		// Delay for 60fps
 		SDL_Delay(16);
 		// Update Window
-		update_screen(sdl, chip8);
+		update_screen(sdl, config, chip8);
 	}
 
 	final_cleanup(sdl);
