@@ -306,6 +306,31 @@ void handle_input(chip8_t *chip8){
 			chip8->PC = chip8->inst.NNN;
 			break;
 
+		case 0x03:
+			// 0x3XNN
+			// Skips the next instruction if VX equals NN (usually the next instruction is a jump to skip a code block)
+
+			printf("V%X == NN (0x%02X) so skipping next intruction 0x%04X\n", chip8->inst.X, chip8->inst.NN, chip8->PC);
+
+			break;
+
+		case 0x04:
+			// 0x4XNN
+			// Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block).
+			// Opposite of 0x3XNN
+
+			printf("V%X != NN (0x%02X) so skipping next instruction 0x%04X\n", chip8->inst.X, chip8->inst.NN, chip8->PC);
+
+			break;
+
+		case 0x05:
+			// 0x5XY0
+			// Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block)
+
+			printf("VX(V%X) == VY(V%X) skkiping the next instruction \n", chip8->inst.X, chip8->inst.Y);
+
+			break;
+
 		case 0x0A:
 			// 0xANNN
 			// Sets I to the address NNN
@@ -396,6 +421,41 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			*/
 			*chip8->SP++ = chip8->PC; 
 			chip8->PC = chip8->inst.NNN;
+			break;
+
+		case 0x03:
+			// 0x3XNN
+			// Skips the next instruction if VX equals NN (usually the next instruction is a jump to skip a code block)
+
+			if(chip8->V[chip8->inst.X] == chip8->inst.NN){
+				chip8->PC += 2;
+			}
+
+			break;
+
+		case 0x04:
+			// 0x4XNN
+			// Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block).
+			// Opposite of 0x3XNN
+
+			if(chip8->V[chip8->inst.X] != chip8->inst.NN){
+				chip8->PC += 2;
+			}
+
+			break;
+
+		case 0x05:
+			// 0x5XY0
+			// Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block)
+
+			if(chip8->inst.N != 0){
+				break; // wrong opcode
+			}
+
+			if(chip8->V[chip8->inst.X] == chip8->V[chip8->inst.Y]){
+				chip8->PC += 2;
+			}
+
 			break;
 
 		case 0x0A:
