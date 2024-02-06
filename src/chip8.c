@@ -458,13 +458,6 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 
 			break;
 
-		case 0x0A:
-			// 0xANNN
-			// Sets I to the address NNN
-
-			chip8->I = chip8->inst.NNN;
-			break;
-
 		case 0x06:
 			// Sets VX to NN
 			// 0x6XNN
@@ -477,6 +470,78 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			// Adds NN to VX (carry flag is not changed)
 			// 0x7XNN
 			chip8->V[chip8->inst.X] += chip8->inst.NN;
+			break;
+
+		case 0x08:
+			switch(chip8->inst.N){
+				case 0:
+					// 0x8XY0
+					// Sets VX to the value of VY
+
+					chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y];
+
+					break;
+
+				case 1:
+					// 0x8XY1
+					// Sets VX to VX or VY (bitwise OR operation)
+
+					chip8->V[chip8->inst.X] |= chip8->V[chip8->inst.Y];
+
+					break;
+
+				case 2:
+					// 0x8XY2
+					// Sets VX to VX and VY (bitwise AND operation)
+
+					chip8->V[chip8->inst.X] &= chip8->V[chip8->inst.Y];
+
+					break;
+
+				case 3:
+					// 0x8XY3
+					// Sets VX to VX xor VY
+
+					chip8->V[chip8->inst.X] ^= chip8->V[chip8->inst.Y];
+
+					break;
+
+				case 4:
+					// 0x8XY4
+					// Adds VY to VX
+					// VF is set to 1 when there's an overflow, and to 0 when there is not
+
+					if((uint16_t)(chip8->V[chip8->inst.X] + chip8->V[chip8->inst.Y]) > 255){
+						chip8->V[0xF] = 1;
+					}
+
+					chip8->V[chip8->inst.X] += chip8->V[chip8->inst.Y];
+
+					break;
+
+				case 5:
+					// 0x8XY5
+					// VY is subtracted from VX
+					// VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not). 
+
+					if((int16_t)(chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y]) < 0){
+						chip8->V[0xF] = 0;
+					}
+
+					chip8->V[chip8->inst.X] -= chip8->V[chip8->inst.Y];
+
+					break;					
+
+				default:
+					break;
+			}
+			break;
+
+		case 0x0A:
+			// 0xANNN
+			// Sets I to the address NNN
+
+			chip8->I = chip8->inst.NNN;
 			break;
 
 
