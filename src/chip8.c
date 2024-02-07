@@ -401,7 +401,10 @@ void handle_input(chip8_t *chip8){
 					// VY is subtracted from VX
 					// VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not). 
 
-					printf("Set V%X += V%X =>(0x%02X) VF = %X\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y], ((int16_t)(chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y]) < 0));
+					printf("Set V%X -= V%X =>(0x%02X) VF = %X\n", chip8->inst.X,
+					 chip8->inst.Y,
+					  chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y],
+					  (int16_t)(chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y]) < 0);
 
 					break;					
 
@@ -409,7 +412,7 @@ void handle_input(chip8_t *chip8){
 					// 0X8XY6
 					// Stores the least significant bit of VX in VF and then shifts VX to the right by 1
 
-					printf("Set V%X >>= 1 =>(0x%02X) VF = %X\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] >>= 1, ((int16_t)(chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y]) < 0));
+					printf("Set V%X >>= 1 =>(0x%02X) VF = %X\n", chip8->inst.X, chip8->V[chip8->inst.X] >> 1, chip8->V[chip8->inst.X] & 1);
 
 					break;
 
@@ -417,14 +420,12 @@ void handle_input(chip8_t *chip8){
 					// 0x8XY7
 					// Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VY >= VX)
 
-					if((int16_t) (chip8->V[chip8->inst.Y] -  chip8->V[chip8->inst.X]) < 0){
-						chip8->V[0xF] = 0;
-					}
-					else{
-						chip8->V[0xF] = 1;
-					}
-
-					chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y] - chip8->V[chip8->inst.X];
+					printf("Set V%X = V%X - V%X=>(0x%02X) VF = %X\n",
+					 chip8->inst.X, 
+					 chip8->inst.Y, 
+					 chip8->inst.X, 
+					 chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y], 
+					 (int16_t) (chip8->V[chip8->inst.Y] -  chip8->V[chip8->inst.X]) < 0);
 
 					break;
 
@@ -432,11 +433,11 @@ void handle_input(chip8_t *chip8){
 					// 0x8XYE
 					// Stores the most significant bit of VX in VF and then shifts VX to the left by 1
 
-					chip8->V[0xF] = (chip8->V[chip8->inst.X] & 0x80) >> 7;
-
-					chip8->V[chip8->inst.X] << = 1;
+					printf("Set V%X <<= 1 =>(0x%02X) VF = %X\n", chip8->inst.X, chip8->V[chip8->inst.X] << 1, (chip8->V[chip8->inst.X] & 0x80) >> 7);
 
 					break;
+			}
+			break;
 
 		case 0x0D:
 			/*
