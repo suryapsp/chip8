@@ -353,6 +353,90 @@ void handle_input(chip8_t *chip8){
 
 			break;
 
+		case 0x08:
+			switch(chip8->inst.N){
+				case 0:
+					// 0x8XY0
+					// Sets VX to the value of VY
+
+					printf("Set V%X to V%X (0x%02X)\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.Y]);
+
+					break;
+
+				case 1:
+					// 0x8XY1
+					// Sets VX to VX or VY (bitwise OR operation)
+					printf("Set V%X |= V%X =>(0x%02X)\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] | chip8->V[chip8->inst.Y]);
+
+
+					break;
+
+				case 2:
+					// 0x8XY2
+					// Sets VX to VX and VY (bitwise AND operation)
+
+					printf("Set V%X &= V%X =>(0x%02X)\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] & chip8->V[chip8->inst.Y]);
+
+					break;
+
+				case 3:
+					// 0x8XY3
+					// Sets VX to VX xor VY
+
+					printf("Set V%X ^= V%X =>(0x%02X)\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] ^ chip8->V[chip8->inst.Y]);
+
+					break;
+
+				case 4:
+					// 0x8XY4
+					// Adds VY to VX
+					// VF is set to 1 when there's an overflow, and to 0 when there is not
+
+					printf("Set V%X += V%X =>(0x%02X) VF = %X\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] + chip8->V[chip8->inst.Y], ((uint16_t)(chip8->V[chip8->inst.X] + chip8->V[chip8->inst.Y]) > 255));
+
+					break;
+
+				case 5:
+					// 0x8XY5
+					// VY is subtracted from VX
+					// VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not). 
+
+					printf("Set V%X += V%X =>(0x%02X) VF = %X\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y], ((int16_t)(chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y]) < 0));
+
+					break;					
+
+				case 6:
+					// 0X8XY6
+					// Stores the least significant bit of VX in VF and then shifts VX to the right by 1
+
+					printf("Set V%X >>= 1 =>(0x%02X) VF = %X\n", chip8->inst.X, chip8->inst.Y, chip8->V[chip8->inst.X] >>= 1, ((int16_t)(chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y]) < 0));
+
+					break;
+
+				case 7:
+					// 0x8XY7
+					// Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VY >= VX)
+
+					if((int16_t) (chip8->V[chip8->inst.Y] -  chip8->V[chip8->inst.X]) < 0){
+						chip8->V[0xF] = 0;
+					}
+					else{
+						chip8->V[0xF] = 1;
+					}
+
+					chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y] - chip8->V[chip8->inst.X];
+
+					break;
+
+				case 0xE:
+					// 0x8XYE
+					// Stores the most significant bit of VX in VF and then shifts VX to the left by 1
+
+					chip8->V[0xF] = (chip8->V[chip8->inst.X] & 0x80) >> 7;
+
+					chip8->V[chip8->inst.X] << = 1;
+
+					break;
 
 		case 0x0D:
 			/*
@@ -531,6 +615,42 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 					chip8->V[chip8->inst.X] -= chip8->V[chip8->inst.Y];
 
 					break;					
+
+				case 6:
+					// 0X8XY6
+					// Stores the least significant bit of VX in VF and then shifts VX to the right by 1
+
+					chip8->V[0xF] = chip8->V[chip8->inst.X] & 1;
+
+					chip8->V[chip8->inst.X] >>= 1;
+
+					break;
+
+				case 7:
+					// 0x8XY7
+					// Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VY >= VX)
+
+					if((int16_t) (chip8->V[chip8->inst.Y] -  chip8->V[chip8->inst.X]) < 0){
+						chip8->V[0xF] = 0;
+					}
+					else{
+						chip8->V[0xF] = 1;
+					}
+
+					chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y] - chip8->V[chip8->inst.X];
+
+					break;
+
+				case 0xE:
+					// 0x8XYE
+					// Stores the most significant bit of VX in VF and then shifts VX to the left by 1
+
+					chip8->V[0xF] = (chip8->V[chip8->inst.X] & 0x80) >> 7;
+
+					chip8->V[chip8->inst.X] <<= 1;
+
+					break;
+
 
 				default:
 					break;
