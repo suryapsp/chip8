@@ -439,6 +439,23 @@ void handle_input(chip8_t *chip8){
 			}
 			break;
 
+		case 0x09:
+			// 0x9XY0
+			// Skips the next instruction if VX does not equal VY. (Usually the next instruction is a jump to skip a code block)
+
+			printf("V%X != V%X so skipping next intruction\n", chip8->inst.X, chip8->inst.Y);
+
+			break;
+
+
+		case 0x0B:
+			// 0xBNNN
+			// Jumps to the address NNN plus V0
+
+			printf("set PC to V0 + NNN => (0x%04X) \n", chip8->inst.NNN + chip8->V[0]);
+
+			break;
+
 		case 0x0D:
 			/*
 			Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that does not happen
@@ -657,6 +674,25 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 					break;
 			}
 			break;
+
+		case 0x09:
+			// 0x9XY0
+			// Skips the next instruction if VX does not equal VY. (Usually the next instruction is a jump to skip a code block)
+
+			if(chip8->V[chip8->inst.X] != chip8->V[chip8->inst.Y]){
+				chip8->PC += 2;
+			}
+
+			break;
+
+		case 0x0B:
+			// 0xBNNN
+			// Jumps to the address NNN plus V0
+
+			chip8->PC = chip8->inst.NNN + chip8->V[0];
+
+			break;
+
 
 		case 0x0A:
 			// 0xANNN
