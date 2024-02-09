@@ -227,6 +227,18 @@ void update_screen(const sdl_t sdl, config_t config, chip8_t chip8){
 }
 
 // User Input
+
+/*
+CHIP-8 KEYPAD		QWERTY
+
+1 2 3 C 			1 2 3 4
+4 5 6 D				Q W E R
+7 8 9 E				A S D F
+A 0 B F				Z X C V
+
+*/
+
+
 void handle_input(chip8_t *chip8){
 	SDL_Event event;
 
@@ -244,13 +256,78 @@ void handle_input(chip8_t *chip8){
 
 					case SDLK_SPACE:
 						if(chip8->state == RUNNING){
-							chip8->state = PAUSED;
+							chip8->state = PAUSED; // pause
 						}
 						else{
-							chip8->state = RUNNING;
-							puts("paused");
+							chip8->state = RUNNING; // resume
+							puts("paused"); 
 						}
 						return;
+
+					case SDLK_1:
+						chip8->keypad[0x1] =  true;
+						break;
+
+					case SDLK_2:
+						chip8->keypad[0x2] =  true;
+						break;
+
+					case SDLK_3:
+						chip8->keypad[0x3] =  true;
+						break;
+
+					case SDLK_4:
+						chip8->keypad[0xC] =  true;
+						break;
+
+					case SDLK_q:
+						chip8->keypad[0x4] =  true;
+						break;
+
+					case SDLK_w:
+						chip8->keypad[0x5] =  true;
+						break;
+
+					case SDLK_e:
+						chip8->keypad[0x6] =  true;
+						break;
+
+					case SDLK_r:
+						chip8->keypad[0xD] =  true;
+						break;
+
+					case SDLK_a:
+						chip8->keypad[0x7] =  true;
+						break;
+
+					case SDLK_s:
+						chip8->keypad[0x8] =  true;
+						break;
+
+					case SDLK_d:
+						chip8->keypad[0x9] =  true;
+						break;
+
+					case SDLK_f:
+						chip8->keypad[0xE] =  true;
+						break;
+
+					case SDLK_z:
+						chip8->keypad[0xA] =  true;
+						break;
+
+					case SDLK_x:
+						chip8->keypad[0x0] =  true;
+						break;
+
+					case SDLK_c:
+						chip8->keypad[0xB] =  true;
+						break;
+
+					case SDLK_v:
+						chip8->keypad[0xF] =  true;
+						break;
+
 
 					default:
 						break;
@@ -472,6 +549,31 @@ void handle_input(chip8_t *chip8){
 			// 0xDXYN
 			printf("Drawing %u height sprite at coordinates V%X [0x%02X] and V%X [0x%02X]\n", chip8->inst.N, chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.Y, chip8->V[chip8->inst.Y]);
 			break;
+
+		case 0xE:
+			switch(chip8->inst.NN){
+				case 0x9E:
+					// 0xEX9E
+					// Skips the next instruction if the key stored in VX is pressed (usually the next instruction is a jump to skip a code block)
+
+					printf("skipping next instruction because key in V%X is pressed\n", chip8->inst.X);
+
+					break;
+
+				case 0xA1:
+					// 0xEXA1
+					// Skips the next instruction if the key stored in VX is not pressed (usually the next instruction is a jump to skip a code block)
+
+					printf("skipping next instruction because key in V%X is not pressed\n", chip8->inst.X);
+
+					break;
+
+				default:
+					break;
+
+			}
+			break;
+
 
 		default:
 			printf("unimplemented \n");
@@ -793,6 +895,20 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			}
 			break;
 
+		case 0x0F:
+			switch (chip8->inst.NN)
+			{
+			case 0x0A:
+				// 0xFX0A
+				// A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event)
+
+
+				
+				break;
+			
+			default:
+				break;
+			}
 
 			break;
 
