@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "SDL.h"
 
@@ -456,6 +457,14 @@ void handle_input(chip8_t *chip8){
 
 			break;
 
+		case 0x0C:
+			// 0xCXNN
+			// Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
+
+			printf("Set V%X to rand()&NN (0x%02X)\n", chip8->inst.X, (rand() % 256) & chip8->inst.NN);
+
+			break;
+
 		case 0x0D:
 			/*
 			Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that does not happen
@@ -685,6 +694,13 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 
 			break;
 
+		case 0x0A:
+			// 0xANNN
+			// Sets I to the address NNN
+
+			chip8->I = chip8->inst.NNN;
+			break;
+
 		case 0x0B:
 			// 0xBNNN
 			// Jumps to the address NNN plus V0
@@ -693,12 +709,11 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 
 			break;
 
+		case 0x0C:
+			// 0xCXNN
+			// Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
+			chip8->V[chip8->inst.X] = (rand() % 256) & chip8->inst.NN;
 
-		case 0x0A:
-			// 0xANNN
-			// Sets I to the address NNN
-
-			chip8->I = chip8->inst.NNN;
 			break;
 
 
@@ -749,6 +764,38 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			}
 			break;
 
+
+		case 0xE:
+			switch(chip8->inst.NN){
+				case 0x9E:
+					// 0xEX9E
+					// Skips the next instruction if the key stored in VX is pressed (usually the next instruction is a jump to skip a code block)
+
+					if(chip8->keypad[chip8->V[chip8->inst.X]] == true){
+						chip8->PC += 2;
+					}
+
+					break;
+
+				case 0xA1:
+					// 0xEXA1
+					// Skips the next instruction if the key stored in VX is not pressed (usually the next instruction is a jump to skip a code block)
+
+					if(chip8->keypad[chip8->V[chip8->inst.X]] == false){
+						chip8->PC += 2;
+					}
+
+					break;
+
+				default:
+					break;
+
+			}
+			break;
+
+
+			break;
+
 		default:
 			break;
 	}
@@ -784,6 +831,8 @@ int main(int argc, char **argv){
 	}
 
 	clear_screen(sdl, config);
+
+	srand(time(NULL));
 
 	// Main Emulator Loop
 	while(chip8.state != QUIT){
