@@ -645,6 +645,48 @@ void handle_input(chip8_t *chip8){
 			}
 			break;
 
+		case 0x0F:
+			switch (chip8->inst.NN)
+			{
+			case 0x0A:
+				// 0xFX0A
+				// A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event)
+
+				printf("wait until key is pressed and then store the key in V%X\n", chip8->inst.X);
+				
+				break;
+
+			case 0x1E:
+				// 0xFX1E
+				// Adds VX to I. VF is not affected
+				printf("I += V%X => (0%2X)\n", chip8->inst.X, chip8->I+chip8->V[chip8->inst.X]);
+				break;
+
+			case 0x07:
+				// 0xFX07
+				// Sets VX to the value of the delay timer
+				printf("V%X = delay_timer() (0x%2X)\n", chip8->inst.X, chip8->delay_timer);
+
+				break;
+
+			case 0x15:
+				// 0xFX15
+				// Sets the delay timer to VX
+				printf("delay_timer() (0x%2X) = V%X\n", chip8->delay_timer, chip8->inst.X);
+
+				break;
+
+			case 0x18:
+				// 0xFX18
+				// Sets the sound timer to VX
+
+				printf("sound_timer() (0x%2X) = V%X\n", chip8->sound_timer, chip8->inst.X);
+			
+			default:
+				break;
+			}
+
+			break;
 
 		default:
 			printf("unimplemented \n");
@@ -989,7 +1031,35 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 				}
 				
 				break;
+
+			case 0x1E:
+				// 0xFX1E
+				// Adds VX to I. VF is not affected
+				chip8->I += chip8->V[chip8->inst.X];
+				break;
 			
+			case 0x07:
+				// 0xFX07
+				// Sets VX to the value of the delay timer
+
+				chip8->V[chip8->inst.X] = chip8->delay_timer;
+
+				break;
+
+			case 0x15:
+				// 0xFX15
+				// Sets the delay timer to VX
+
+				chip8->delay_timer = chip8->V[chip8->inst.X];
+
+				break;
+
+			case 0x18:
+				// 0xFX18
+				// Sets the sound timer to VX
+
+				chip8->sound_timer = chip8->V[chip8->inst.X];
+
 			default:
 				break;
 			}
