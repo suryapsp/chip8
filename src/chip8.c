@@ -681,6 +681,8 @@ void handle_input(chip8_t *chip8){
 				// Sets the sound timer to VX
 
 				printf("sound_timer() (0x%2X) = V%X\n", chip8->sound_timer, chip8->inst.X);
+
+				break;
 			
 			default:
 				break;
@@ -1059,6 +1061,8 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 				// Sets the sound timer to VX
 
 				chip8->sound_timer = chip8->V[chip8->inst.X];
+
+				break;
 
 			default:
 				break;
