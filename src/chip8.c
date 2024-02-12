@@ -15,6 +15,8 @@ typedef struct {
 	uint32_t scale_factor; // Scale CHIP-8 px
 
 	bool pixel_outlines; // does the user want pixel outlines or not
+
+	uint32_t inst_per_sec; // cpu clock rate
 }config_t;
 
 typedef struct 
@@ -88,7 +90,8 @@ bool set_config(config_t *config, int argc, char **argv){
 		.foreground_color = 0xFFFFFFFF, //White 
 		.background_color = 0x000000FF,  //Yellow
 		.scale_factor = 20, // Scale 20x
-		.pixel_outlines = true // Draw pixel outlines
+		.pixel_outlines = true, // Draw pixel outlines
+		.inst_per_sec = 500 // Default Clock Rate
 	};
 
 	// Change Defaults
@@ -683,6 +686,34 @@ void handle_input(chip8_t *chip8){
 				printf("sound_timer() (0x%2X) = V%X\n", chip8->sound_timer, chip8->inst.X);
 
 				break;
+
+			case 0x29:
+				// 0xFX29
+				// Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font
+
+				printf("set I to sprite location in memory for character in V%X  \n", chip8->inst.X);
+
+				break;
+ 
+			case 0x33:
+				// 0xFX33
+
+				printf("store BCD representation of V%X\n", chip8->inst.X);
+				break;
+
+			case 0x55:
+				// 0xFX55
+				// Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified
+
+				printf("register dump from V0 to V%X\n", chip8->inst.X);
+				break;
+
+			case 0x65:
+				// 0xFX65
+				// Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified
+
+				printf("register load from V0 to V%X\n", chip8->inst.X);
+				break;
 			
 			default:
 				break;
@@ -854,6 +885,9 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 
 					if((int16_t)(chip8->V[chip8->inst.X] - chip8->V[chip8->inst.Y]) < 0){
 						chip8->V[0xF] = 0;
+					}
+					else{
+						chip8->V[0xF] = 1;
 					}
 
 					chip8->V[chip8->inst.X] -= chip8->V[chip8->inst.Y];
@@ -1064,6 +1098,48 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 
 				break;
 
+			case 0x29:
+				// 0xFX29
+				// Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font
+
+				chip8->I = chip8->V[chip8->inst.X] * 5;
+
+				break;
+
+			case 0x33:
+				// 0xFX33
+				uint8_t bcd = chip8->V[chip8->inst.X];
+
+				chip8->ram[chip8->I + 2] = bcd % 10;
+				bcd /= 10;
+
+				chip8->ram[chip8->I + 1] = bcd % 10;
+				bcd /= 10;
+
+				chip8->ram[chip8->I] = bcd % 10;
+
+				break;
+
+			case 0x55:
+				// 0xFX55
+				// Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified
+
+				for(uint8_t i = 0; i <= chip8->inst.X; i++){
+					chip8->ram[chip8->I+i] = chip8->V[i];
+				}
+
+				break;
+
+			case 0x65:
+				// 0xFX65
+				// Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified
+
+				for(uint8_t i = 0; i <= chip8->inst.X; i++){
+					chip8->V[i] = chip8->ram[chip8->I+i];
+				}
+
+				break;
+
 			default:
 				break;
 			}
@@ -1076,6 +1152,15 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 
 }
 
+ void update_timers(chip8_t *chip8){
+	if(chip8->delay_timer > 0){
+		chip8->delay_timer--;
+	}
+
+	if(chip8->sound_timer > 0){
+		chip8->sound_timer--;
+	}
+}
 
 int main(int argc, char **argv){
 	// NO ROM PASSED
@@ -1115,16 +1200,23 @@ int main(int argc, char **argv){
 
 		if(chip8.state == PAUSED){continue;}
 
+		// Get time before running instructions
+		uint64_t start = SDL_GetPerformanceCounter();
+
+		for(uint32_t i = 0; i < config.inst_per_sec/60; i++)
 		emulate_instructions(&chip8, config);
 
+		// Get time after running instructions
+		uint64_t end = SDL_GetPerformanceCounter();
 
-		// CHIP 8 Instructions Emulation
 
+		double time_elapsed = (double)((end-start)/1000)/SDL_GetPerformanceFrequency();
 
 		// Delay for 60fps
-		SDL_Delay(16);
+		SDL_Delay(16.67f > time_elapsed ? 16.67f - time_elapsed : 0);
 		// Update Window
 		update_screen(sdl, config, chip8);
+		update_timers(&chip8);
 	}
 
 	final_cleanup(sdl);
