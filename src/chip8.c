@@ -198,7 +198,7 @@ void update_screen(const sdl_t sdl, config_t config, chip8_t chip8){
 
 
 // Draw Rectange per pixel
-	for(u_int32_t i = 0; i < sizeof(chip8.display); i++){
+	for(uint32_t i = 0; i < sizeof(chip8.display); i++){
 		// Translate i value to x y coordinates
 		rect.x = (i % config.window_width)*config.scale_factor;
 		rect.y = (i / config.window_width) *config.scale_factor;
