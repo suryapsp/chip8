@@ -2,8 +2,8 @@
 A chip8 emulator/interpreter written in C.
 
 ![Tetris](screenshots/tetris.png)
-![Breakout](screens/breakout.png)
-![Tank](screens/tank.png)
+![Breakout](screenshots/breakout.png)
+![Tank](screenshots/tank.png)
 
 ## Dependencies
 - GCC
