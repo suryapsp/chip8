@@ -1,9 +1,14 @@
 # CHIP 8
 A chip8 emulator/interpreter written in C.
 
+![Tetris](screenshots/tetris.png)
+![Breakout](screens/breakout.png)
+![Tank](screens/tank.png)
+
 ## Dependencies
 - GCC
 - make
+- SDL2
 
 ## Installation
 ```bash
@@ -27,12 +32,16 @@ Original CHIP-8 Keyboard Layout
 4 5 6 D				Q W E R
 7 8 9 E				A S D F
 A 0 B F				Z X C V
+
+Extra Keys
+
+PAUSE = SPACE
+QUIT = ESCAPE
 ```
 
 ## Future Plans
 
-### Things i will do in future (in order)
-- seprate everything by making header files
+### Things i will do in future 
 - sound support
 - cli flags
 
