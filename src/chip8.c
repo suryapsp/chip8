@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "chip8.h"
+#include "sound.h"
 
 
 bool init_chip8(chip8_t *chip8, const char rom_name[]){
@@ -75,12 +76,35 @@ bool init_sdl(sdl_t *sdl, config_t config){
 
 	if(!sdl -> window){
 		SDL_Log("could not create window %s\n", SDL_GetError());
+		return false;
 	}
 
 	sdl -> renderer = SDL_CreateRenderer(sdl -> window, -1, SDL_RENDERER_ACCELERATED);
 
 	if(!sdl->renderer){
 		SDL_Log("could not create renderer %s\n", SDL_GetError());
+		return false;
+	}
+
+	sdl->want = (SDL_AudioSpec){
+		.freq = 44100,
+		.format = AUDIO_S16LSB, //signed 16 bit little indian
+		.channels = 1, //mono 1 channel
+		.samples = 4096,
+		// .callback = audio_callback(),
+		.userdata = &config
+	};
+
+	sdl->dev = SDL_OpenAudioDevice(NULL,0, &sdl->want, &sdl->have, 0);
+
+	if(sdl->dev == 0){
+		SDL_Log("could not get any audio device %s\n", SDL_GetError());
+		return false;
+	}
+
+	if((sdl->want.format != sdl->have.format)||(sdl->want.channels != sdl->have.channels)){
+		SDL_Log("could not get desired audio spec\n");
+		return false;
 	}
 
 	return true; // Initialization Done
@@ -112,6 +136,7 @@ bool set_config(config_t *config, int argc, char **argv){
 void final_cleanup(sdl_t sdl){
 	SDL_DestroyRenderer(sdl.renderer);
 	SDL_DestroyWindow(sdl.window);
+	SDL_CloseAudioDevice(sdl.dev);
 	SDL_Quit(); // Quit SDL Subsystem
 }
 

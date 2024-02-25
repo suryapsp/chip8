@@ -17,7 +17,7 @@ cd chip8
 mkdir bin
 make
 ```
-- use ```make debug``` instead of make for debug output
+<!-- - use ```make debug``` instead of make for debug output -->
 
 ## Usage
 ```bash
