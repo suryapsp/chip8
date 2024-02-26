@@ -65,14 +65,14 @@ bool init_chip8(chip8_t *chip8, const char rom_name[]){
 	return true; //Sucess
 }
 
-bool init_sdl(sdl_t *sdl, config_t config){
+bool init_sdl(sdl_t *sdl, config_t *config){
 	if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER) != 0){
 		SDL_Log("Can't Initialize SDL Subsystem %s \n", SDL_GetError());
 		return false; // Initialization Failed
 	}
 
 
-	sdl -> window = SDL_CreateWindow("CHIP-8 Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.window_width * config.scale_factor, config.window_height * config.scale_factor, 0);
+	sdl -> window = SDL_CreateWindow("CHIP-8 Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config->window_width * config->scale_factor, config->window_height * config->scale_factor, 0);
 
 	if(!sdl -> window){
 		SDL_Log("could not create window %s\n", SDL_GetError());
@@ -90,9 +90,9 @@ bool init_sdl(sdl_t *sdl, config_t config){
 		.freq = 44100,
 		.format = AUDIO_S16LSB, //signed 16 bit little indian
 		.channels = 1, //mono 1 channel
-		.samples = 4096,
-		// .callback = audio_callback(),
-		.userdata = &config
+		.samples = 512,
+		.callback = audio_callback,
+		.userdata = config
 	};
 
 	sdl->dev = SDL_OpenAudioDevice(NULL,0, &sdl->want, &sdl->have, 0);
@@ -120,7 +120,10 @@ bool set_config(config_t *config, int argc, char **argv){
 		.background_color = 0x000000FF,  //Yellow
 		.scale_factor = 20, // Scale 20x
 		.pixel_outlines = true, // Draw pixel outlines
-		.inst_per_sec = 500 // Default Clock Rate
+		.inst_per_sec = 700, // Default Clock Rate
+		.square_wave_freq = 440, 
+		.audio_sample_rate = 44100,
+		.volume = 3000,
 	};
 
 	// Change Defaults
@@ -142,13 +145,17 @@ void final_cleanup(sdl_t sdl){
 
 
 
-void update_timers(chip8_t *chip8){
+void update_timers(const sdl_t sdl, chip8_t *chip8){
 	if(chip8->delay_timer > 0){
 		chip8->delay_timer--;
 	}
 
 	if(chip8->sound_timer > 0){
 		chip8->sound_timer--;
+		SDL_PauseAudioDevice(sdl.dev, 0); // Play Audio
+	}
+	else{
+		SDL_PauseAudioDevice(sdl.dev, 1); //Pause Audio
 	}
 }
 

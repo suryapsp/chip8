@@ -19,7 +19,7 @@ int main(int argc, char **argv){
 
 	// Initialization
 	sdl_t sdl = {0};
-	if(init_sdl(&sdl, config) == false){
+	if(init_sdl(&sdl, &config) == false){
 		exit(EXIT_FAILURE);
 	}
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv){
 		SDL_Delay(16.67f > time_elapsed ? 16.67f - time_elapsed : 0);
 		// Update Window
 		update_screen(sdl, config, chip8);
-		update_timers(&chip8);
+		update_timers(sdl, &chip8);
 	}
 
 	final_cleanup(sdl);

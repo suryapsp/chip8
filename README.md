@@ -42,7 +42,6 @@ QUIT = ESCAPE
 ## Future Plans
 
 ### Things i will do in future 
-- sound support
 - cli flags
 
 ### Things i might do in future

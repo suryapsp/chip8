@@ -20,6 +20,12 @@ typedef struct {
 	bool pixel_outlines; // does the user want pixel outlines or not
 
 	uint32_t inst_per_sec; // cpu clock rate
+
+	uint32_t square_wave_freq;  //frequency of square wave sound
+
+	uint32_t audio_sample_rate;
+
+	int16_t volume;
 }config_t;
 
 typedef struct 
@@ -68,12 +74,12 @@ typedef struct{
 // Initialize CHIP8 machine
 bool init_chip8(chip8_t *chip8, const char rom_name[]);
 
-bool init_sdl(sdl_t *sdl, config_t config);
+bool init_sdl(sdl_t *sdl, config_t *config);
 
 bool set_config(config_t *config, int argc, char **argv);
 
 void final_cleanup(sdl_t sdl);
 
-void update_timers(chip8_t *chip8);
+void update_timers(const sdl_t sdl, chip8_t *chip8);
 
 #endif

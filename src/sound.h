@@ -3,6 +3,6 @@
 
 #include "chip8.h"
 
-int audio_callback(void *userdata, uint8_t *stream, int len);
+void audio_callback(void *userdata, uint8_t *stream, int len);
 
 #endif
