@@ -36,7 +36,8 @@ A 0 B F				Z X C V
 Extra Keys
 
 PAUSE = SPACE
-QUIT = ESCAPE
+QUIT  = ESCAPE
+RESET = BACKSPACE
 ```
 
 ## Future Plans
