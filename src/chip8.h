@@ -67,6 +67,7 @@ typedef struct{
 	const char *rom_name; //Name of ROM
 	uint16_t PC; //Program Counter
 	instruction_t inst; //instruction currently executing
+	bool draw; //update screen
 } chip8_t;
 
 

@@ -33,12 +33,16 @@ void handle_input(chip8_t *chip8){
 					case SDLK_SPACE:
 						if(chip8->state == RUNNING){
 							chip8->state = PAUSED; // pause
+							puts("paused"); 
 						}
 						else{
 							chip8->state = RUNNING; // resume
-							puts("paused"); 
 						}
-						return;
+						break;
+
+					case SDLK_BACKSPACE:
+						init_chip8(chip8, chip8->rom_name);
+						break;
 
 					case SDLK_1:
 						chip8->keypad[0x1] =  true;

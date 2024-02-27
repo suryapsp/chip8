@@ -25,6 +25,9 @@ bool init_chip8(chip8_t *chip8, const char rom_name[]){
     	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
 
+	// Initialize chip8 machine
+	memset(chip8, 0, sizeof(chip8_t));
+
 	// Load Font
 	memcpy(&chip8 -> ram[0], font, sizeof(font));
 

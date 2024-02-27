@@ -24,6 +24,7 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 			if(chip8->inst.NN == 0xE0){
 				// 0x00E0 Display Clear
 				memset(chip8->display, false, sizeof(chip8->display));
+				chip8->draw = true;
 			}
 			else if(chip8->inst.NN == 0xEE){
 				// Returns from a subroutine
@@ -286,6 +287,7 @@ void emulate_instructions(chip8_t *chip8, const config_t config){
 				// 
 				if(++y >= config.window_height) break;
 			}
+			chip8->draw = true;
 			break;
 
 

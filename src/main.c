@@ -56,7 +56,10 @@ int main(int argc, char **argv){
 		// Delay for 60fps
 		SDL_Delay(16.67f > time_elapsed ? 16.67f - time_elapsed : 0);
 		// Update Window
-		update_screen(sdl, config, chip8);
+		if(chip8.draw){
+			update_screen(sdl, config, chip8);
+			chip8.draw = false;
+		}
 		update_timers(sdl, &chip8);
 	}
 
