@@ -42,10 +42,7 @@ RESET = BACKSPACE
 
 ## Future Plans
 
-### Things i will do in future 
-- cli flags
-
-### Things i might do in future
 - write my own chip8 rom
 - super chip8 extension
+- cli flags
 
